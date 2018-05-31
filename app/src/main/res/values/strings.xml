@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">HIITimer</string>
+    <string name="on_name">ON</string>
+    <string name="off_name">OFF</string>
+    <string name="default_num">0</string>
+    <string name="start_button">START</string>
+    <string name="set_name">SETS</string>
+</resources>
