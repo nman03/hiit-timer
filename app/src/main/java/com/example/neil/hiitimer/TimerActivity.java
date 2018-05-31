@@ -12,7 +12,7 @@ import java.util.TimerTask;
 public class TimerActivity extends AppCompatActivity {
     static int interval, counter;
     static int onDuration, offDuration, numOfSets;
-    static boolean isOn = true;
+    static boolean isOn, isDone;
     static Timer timer;
 
     @Override
@@ -29,17 +29,27 @@ public class TimerActivity extends AppCompatActivity {
         timer = new Timer();
         interval = onDuration;
         counter = 0;
+        isOn = true;
+        isDone = false;
 
         final TextView current = findViewById(R.id.textView);
         current.setText(String.valueOf(interval));
+
+        final TextView setCounter = findViewById(R.id.setCounter);
+        setCounter.setText(String.valueOf(counter));
 
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        current.setText(String.valueOf(interval));
                         setInterval();
+
+                        if (isDone) current.setText("Done");
+                        else current.setText(String.valueOf(interval));
+
+                        setCounter.setText(String.valueOf(counter));
+                        interval--;
                     }
                 });
             }
@@ -65,23 +75,25 @@ public class TimerActivity extends AppCompatActivity {
 
     private static final void setInterval() {
         if (counter < numOfSets) {
-            if (interval == 1) {
-                if (isOn) {
-                    interval = offDuration + 1;
-                    isOn = false;
-                }
-                else {
-                    interval = onDuration + 1;
-                    isOn = true;
-                    counter++;
+            if (interval == 0) {
+                if (!isDone) {
+                    if (isOn) {
+                        interval = offDuration;
+                        isOn = false;
+                        counter++;
+                    } else {
+                        interval = onDuration;
+                        isOn = true;
+                    }
                 }
             }
+        }
+        else if (counter == numOfSets){
+            isDone = true;
         }
         else {
             timer.cancel();
             timer.purge();
         }
-
-        interval--;
     }
 }

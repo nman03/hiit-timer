@@ -5,4 +5,5 @@
     <string name="default_num">0</string>
     <string name="start_button">START</string>
     <string name="set_name">SETS</string>
+    <string name="set_counter_name">Sets Completed:</string>
 </resources>
