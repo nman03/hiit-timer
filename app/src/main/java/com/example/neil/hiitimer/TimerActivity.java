@@ -1,11 +1,16 @@
 package com.example.neil.hiitimer;
 
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.media.MediaPlayer;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -14,6 +19,10 @@ public class TimerActivity extends AppCompatActivity {
     static int onDuration, offDuration, numOfSets;
     static boolean isOn, isDone;
     static Timer timer;
+    static MediaPlayer mp;
+    static final int BEGIN_RES_ID = R.raw.begin;
+    static final int REST_RES_ID = R.raw.rest;
+    static final int DONE_RES_ID = R.raw.done;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,9 +36,9 @@ public class TimerActivity extends AppCompatActivity {
         numOfSets = data[2];
 
         timer = new Timer();
-        interval = onDuration;
+        interval = 3;
         counter = 0;
-        isOn = true;
+        isOn = false;
         isDone = false;
 
         final TextView current = findViewById(R.id.textView);
@@ -41,12 +50,30 @@ public class TimerActivity extends AppCompatActivity {
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 runOnUiThread(new Runnable() {
+                    @RequiresApi(api = Build.VERSION_CODES.N)
                     @Override
                     public void run() {
-                        setInterval();
+                        resetInterval();
 
-                        if (isDone) current.setText("Done");
-                        else current.setText(String.valueOf(interval));
+                        if (isDone) {
+                            current.setText("Done");
+                            mp.release();
+                            timer.cancel();
+                            timer.purge();
+                        }
+
+                        else {
+                            current.setText(String.valueOf(interval));
+                            if (interval == 3) {
+                                if (isOn) {
+                                    if (counter == numOfSets - 1) playVoiceQues(DONE_RES_ID);
+                                    else playVoiceQues(REST_RES_ID);
+
+                                }
+
+                                else playVoiceQues(BEGIN_RES_ID);
+                            }
+                        }
 
                         setCounter.setText(String.valueOf(counter));
                         interval--;
@@ -60,6 +87,7 @@ public class TimerActivity extends AppCompatActivity {
     public void onBackPressed() {
         timer.cancel();
         timer.purge();
+        mp.release();
         super.onBackPressed();
     }
 
@@ -73,27 +101,35 @@ public class TimerActivity extends AppCompatActivity {
     }
 
 
-    private static final void setInterval() {
-        if (counter < numOfSets) {
-            if (interval == 0) {
-                if (!isDone) {
-                    if (isOn) {
-                        interval = offDuration;
-                        isOn = false;
-                        counter++;
-                    } else {
-                        interval = onDuration;
-                        isOn = true;
-                    }
+    private static final void resetInterval() {
+        if (interval == 0) {
+            if (!isDone) {
+                if (isOn) {
+                    interval = offDuration;
+                    isOn = false;
+                    counter++;
+                    if (counter == numOfSets) isDone = true;
+                } else {
+                    interval = onDuration;
+                    isOn = true;
                 }
             }
         }
-        else if (counter == numOfSets){
-            isDone = true;
-        }
-        else {
-            timer.cancel();
-            timer.purge();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private final void playVoiceQues(int resourceId) {
+        mp = new MediaPlayer();
+        AssetFileDescriptor afd = getApplicationContext().getResources().openRawResourceFd(resourceId);
+
+        try {
+            mp.setDataSource(afd);
+            mp.prepare();
+            mp.start();
+        } catch (IOException i) {
+            i.printStackTrace();
         }
     }
+
+
 }
